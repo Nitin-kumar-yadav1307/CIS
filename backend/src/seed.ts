@@ -1,6 +1,10 @@
-import 'dotenv/config';
+import dotenv from 'dotenv';
+import path from 'path';
 import mongoose from 'mongoose';
 import { Salary } from './models/Salary';
+
+dotenv.config({ path: path.join(__dirname, '../.env.local') });
+dotenv.config();
 
 const SEED_DATA = [
   // Google - Bangalore

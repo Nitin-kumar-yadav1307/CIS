@@ -1,181 +1,97 @@
 # Deployment Guide: CIS to Render
 
-This guide walks you through deploying the Compensation Intelligence System to Render (free tier).
+This version deploys the whole app as **one Render Web Service** and gives you **one public URL**.
 
 **GitHub Repo**: https://github.com/Nitin-kumar-yadav1307/CIS.git
 
 ---
 
+## What changed
+
+- The root `server.js` now serves both the Next.js frontend and the Express API.
+- The frontend calls the API on the same origin using `/api`.
+- You only need one Render web service.
+
+---
+
 ## Prerequisites
 
-- GitHub account (repo already public)
-- MongoDB Atlas account (free tier)
-- Render account (free tier)
+- GitHub account
+- Render account
+- MongoDB Atlas account
 
 ---
 
-## Step 1: Set Up MongoDB Atlas (5 minutes)
+## Step 1: MongoDB Atlas
 
-1. Go to https://www.mongodb.com/cloud/atlas
-2. Sign up or log in
-3. Create a new **Free M0 Cluster**
-4. Choose region closest to you (e.g., `ap-south-1` for India)
-5. Create a **Database User**:
-   - Username: `cis_user`
-   - Password: `YourStrongPassword123` (save this)
-6. Add **Network Access**: Allow `0.0.0.0/0` (allow all IPs)
-7. Get your **Connection String**:
-   - Click **Clusters** → **Connect** → **Drivers**
-   - Copy the connection string (looks like):
-     ```
-     mongodb+srv://cis_user:YourStrongPassword123@cluster0.xxxxx.mongodb.net/cis?retryWrites=true&w=majority
-     ```
-   - **Save this** — you'll need it for backend environment variables
+1. Create a free M0 cluster.
+2. Create a DB user and allow `0.0.0.0/0` in Network Access.
+3. Copy the connection string.
+
+Example:
+```text
+mongodb+srv://cis_user:YourStrongPassword123@cluster0.xxxxx.mongodb.net/cis?retryWrites=true&w=majority
+```
 
 ---
 
-## Step 2: Deploy Backend to Render (10 minutes)
+## Step 2: Render Web Service
 
-### 2a. Create Backend Service
+1. Go to https://render.com and create a **Web Service** from the repo.
+2. Use these settings:
 
-1. Go to https://render.com
-2. Sign up with GitHub (authorize the connection)
-3. Click **New +** → **Web Service**
-4. Select your repo: `Nitin-kumar-yadav1307/CIS`
-5. Fill in the form:
-   - **Name**: `cis-backend`
-   - **Environment**: `Node`
-   - **Build command**: `npm install && npm run build`
-   - **Start command**: `npm start`
-   - **Root directory**: `backend`
-   - **Region**: Choose your region
+```text
+Root Directory: .
+Build Command: npm install && npm run build
+Start Command: npm start
+```
 
-### 2b. Add Environment Variables
+3. Add environment variables:
 
-Click **Add Environment Variable** and add:
+```text
+MONGO_URI=your_mongodb_atlas_connection_string
+PORT=10000
+NODE_ENV=production
+```
 
-| Key | Value |
-|-----|-------|
-| `MONGO_URI` | `mongodb+srv://cis_user:YourStrongPassword123@cluster0.xxxxx.mongodb.net/cis?retryWrites=true&w=majority` |
-| `PORT` | `5000` |
-| `NODE_ENV` | `production` |
+If your MongoDB password contains special characters like `@`, URL-encode them first. For example, `@` becomes `%40`.
 
-### 2c. Deploy
-
-1. Click **Create Web Service**
-2. Wait 2–3 minutes for deployment to complete
-3. When done, copy your **Backend URL** from the dashboard (e.g., `https://cis-backend.onrender.com`)
-4. Test: Visit `https://cis-backend.onrender.com/health` — should return `{"status":"ok","timestamp":"..."}`
+4. Deploy.
 
 ---
 
-## Step 3: Deploy Frontend to Render (10 minutes)
+## Step 3: Use the single link
 
-### 3a. Create Frontend Service
+After deploy, Render gives you one URL, for example:
 
-1. In Render dashboard, click **New +** → **Web Service**
-2. Select the same repo: `Nitin-kumar-yadav1307/CIS`
-3. Fill in:
-   - **Name**: `cis-frontend`
-   - **Environment**: `Node`
-   - **Build command**: `npm install && npm run build`
-   - **Start command**: `npm start`
-   - **Root directory**: `frontend`
-   - **Region**: Same as backend
+```text
+https://cis.onrender.com
+```
 
-### 3b. Add Environment Variables
-
-Click **Add Environment Variable**:
-
-| Key | Value |
-|-----|-------|
-| `NEXT_PUBLIC_API_URL` | `https://cis-backend.onrender.com/api` |
-
-(Replace with your actual backend URL from Step 2)
-
-### 3c. Deploy
-
-1. Click **Create Web Service**
-2. Wait 2–3 minutes
-3. When done, copy your **Frontend URL** (e.g., `https://cis-frontend.onrender.com`)
+Use that one URL for the recruiter/demo.
 
 ---
 
-## Step 4: Test Live Deployment (5 minutes)
+## What to test
 
-1. Open your **Frontend URL** in browser
-2. Test these flows:
-   - ✅ Page loads and shows salary table
-   - ✅ Click a company name → goes to company page with stats
-   - ✅ Try filters (company, level, location)
-   - ✅ Click **Compare** → select 2 salaries → see comparison
-   - ✅ Click **Export CSV** → downloads a file
-
-If anything breaks, check **Logs** in Render dashboard for errors.
+1. Open the homepage and verify the salary table loads.
+2. Click a company name and verify the company page loads.
+3. Open Compare and verify the comparison view works.
+4. Try Export CSV.
+5. Visit `/health` to confirm the service is alive.
 
 ---
 
-## URLs After Deployment
+## Important notes
 
-| Component | URL |
-|-----------|-----|
-| Frontend | `https://cis-frontend.onrender.com` |
-| Backend API | `https://cis-backend.onrender.com/api` |
-| Health Check | `https://cis-backend.onrender.com/health` |
-| Salary List | `https://cis-backend.onrender.com/api/salaries` |
+- You do **not** need a separate frontend Render service anymore.
+- You do **not** need to set `NEXT_PUBLIC_API_URL` for deployment.
+- If you run the frontend separately in local dev, you can still set `NEXT_PUBLIC_API_URL` in `frontend/.env.local`.
 
 ---
 
 ## Troubleshooting
 
-### Backend won't start
-- Check **Logs** tab for MongoDB connection errors
-- Verify `MONGO_URI` is correct (no typos)
-- Ensure MongoDB Atlas Network Access includes `0.0.0.0/0`
-
-### Frontend shows blank page
-- Check browser console for errors (F12)
-- Verify `NEXT_PUBLIC_API_URL` points to correct backend
-- Check Render **Logs** for build errors
-
-### API calls fail (CORS error)
-- Backend already has CORS enabled in `src/index.ts`
-- If still failing, check that backend URL is correct in frontend
-
----
-
-## Optional: Add More Sample Data
-
-After deployment, seed the database with sample data:
-
-```bash
-# Locally (with backend running on port 5001):
-cd backend
-MONGO_URI=<your_mongo_uri> npm run seed
-```
-
-This adds 24 salary entries from major tech companies.
-
----
-
-## Cost
-
-- **Render**: Free tier (750 hours/month = always free if 1 service running)
-- **MongoDB Atlas**: Free tier (512 MB storage)
-- **Total**: $0/month
-
----
-
-## Next Steps
-
-1. **For recruiting calls**: Open the live URL and show it to recruiters
-2. **For improvements**: Each GitHub push auto-redeployes on Render
-3. **For scaling**: Upgrade Render plan if you add more features (currently free)
-
----
-
-## Still Have Questions?
-
-- Render docs: https://render.com/docs
-- MongoDB docs: https://docs.mongodb.com/manual/
-- Next.js deployment: https://nextjs.org/docs/deployment
+- If the app cannot connect to MongoDB, check the Atlas connection string and IP allowlist.
+- If the page loads but API calls fail, check Render logs for `MONGO_URI` or startup errors.
+- If build fails, make sure Render is using the repo root as the root directory.

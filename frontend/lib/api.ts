@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Salary, SalaryFilter, SalaryListResponse, CompanyStats, ComparisonResult } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
 
 const client = axios.create({
   baseURL: API_URL,
