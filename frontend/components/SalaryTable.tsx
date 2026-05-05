@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import type { MouseEvent } from 'react';
 import { Salary } from '@/types';
 import { formatCurrency } from '@/lib/constants';
 
@@ -60,7 +61,7 @@ export const SalaryTable: React.FC<SalaryTableProps> = ({ salaries, isLoading, o
                 <Link
                   href={`/company/${encodeURIComponent(salary.company)}`}
                   className="text-blue-700 hover:text-blue-900 hover:underline"
-                  onClick={(event) => event.stopPropagation()}
+                  onClick={(event: MouseEvent<HTMLAnchorElement>) => event.stopPropagation()}
                 >
                   {salary.company}
                 </Link>
