@@ -16,7 +16,25 @@ const { connectDB } = require('./backend/src/db');
 const dev = process.env.NODE_ENV !== 'production';
 const PORT = process.env.PORT || 10000;
 const frontendDir = path.join(__dirname, 'frontend');
-const next = require(path.join(frontendDir, 'node_modules', 'next'));
+
+let next;
+try {
+  // Prefer Next installed inside the frontend workspace (common in some setups)
+  next = require(path.join(frontendDir, 'node_modules', 'next'));
+} catch (err) {
+  try {
+    // Fallback to Next installed at the project root (hoisted or monorepo installs)
+    next = require(path.join(__dirname, 'node_modules', 'next'));
+  } catch (err2) {
+    try {
+      // Final fallback to resolving by name (if in NODE_PATH or standard resolution)
+      next = require('next');
+    } catch (err3) {
+      console.error('Could not locate Next.js. Tried frontend/node_modules, project root, and global require.');
+      throw err3;
+    }
+  }
+}
 
 const nextApp = next({ dev, dir: frontendDir });
 const handle = nextApp.getRequestHandler();
