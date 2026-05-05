@@ -1,7 +1,21 @@
 import axios from 'axios';
 import { Salary, SalaryFilter, SalaryListResponse, CompanyStats, ComparisonResult } from '../types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || '/api';
+// Prefer same-origin in production. If NEXT_PUBLIC_API_URL points to localhost,
+// fall back to '/api' so deployed frontend talks to the deployed backend.
+const API_URL = (() => {
+  const env = process.env.NEXT_PUBLIC_API_URL;
+  if (!env) return '/api';
+  try {
+    const u = new URL(env);
+    const host = u.hostname;
+    if (host === 'localhost' || host === '127.0.0.1') return '/api';
+    return env.replace(/\/+$/, '');
+  } catch (e) {
+    // env might be a relative path already
+    return env;
+  }
+})();
 
 const client = axios.create({
   baseURL: API_URL,
